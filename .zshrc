@@ -129,6 +129,36 @@ function zap() {
     esac
 }
 
+# iTerm2 window/tab color commands
+#   Requires iTerm2 >= Build 1.0.0.20110804
+#   http://code.google.com/p/iterm2/wiki/ProprietaryEscapeCodes
+tab-color() {
+    echo -ne "\033]6;1;bg;red;brightness;$1\a"
+    echo -ne "\033]6;1;bg;green;brightness;$2\a"
+    echo -ne "\033]6;1;bg;blue;brightness;$3\a"
+}
+tab-reset() {
+    echo -ne "\033]6;1;bg;*;default\a"
+}
+
+# Change the color of the tab when using SSH
+# reset the color after the connection closes
+color-ssh() {
+    if [[ -n "$ITERM_SESSION_ID" ]]; then
+        trap "tab-reset" INT EXIT
+        if [[ "$*" =~ "production|ec2-.*compute-1" ]]; then
+            tab-color 255 0 0
+        else
+            tab-color 0 255 0
+        fi
+    fi
+    ssh $*
+}
+compdef _ssh color-ssh=ssh
+
+
+alias ssh=color-ssh
+alias chrome='open -a Google\ Chrome'
 alias sb='ssh serveradmin@siteburst.net@siteburst.net -i ~/.ssh/mykey'
 #alias web9='ssh bgarner@calweb9ap01.fglsports.dmz -i ~/.ssh/mykey'
 #alias web8='ssh bgarner@calweb8ap01.fglsports.com -i ~/.ssh/mykey'
@@ -144,8 +174,11 @@ alias gs='git status'
 alias ga='git add .'
 alias gc='git commit -m '
 
+alias gl='git log --pretty=format:"%h - %an, %ar : %s"'
+
 alias git-remove='git rm $(git ls-files --deleted)'
 alias git-prune="git branch -r | awk '{print $1}' | egrep -v -f /dev/fd/0 <(git branch -vv | grep origin) | awk '{print $1}' | xargs git branch -d"
+alias git-del-merged-branches="git branch -D `git branch --merged | grep -v \* | xargs`"
 
 # cd into whatever is the forefront Finder window.
 cdf() {  # short for cdfinder
